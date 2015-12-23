@@ -1,0 +1,15 @@
+---
+
+- name: install sudo
+
+  apt: { name: sudo }
+
+- name: use template
+
+  template:
+    src: sudoers.d.j2
+    dest: "/etc/sudoers.d/{{ file }}"
+    mode: 0440
+    owner: root
+    group: root
+    validate: "/usr/sbin/visudo -cf %s"
