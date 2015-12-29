@@ -1,0 +1,21 @@
+# -*- Mode: jinja2; -*-
+# {{ ansible_managed }}
+
+{% for user in users %}
+{% if user.env_keep is defined -%}
+{%   for env in user.env_keep  -%}
+Defaults:{{ user.name }} env_keep += {{ env }}
+{%   endfor                    -%}
+{% endif                       -%}
+{{ user.name }}  
+{%-  if user.host is defined -%}{{ user.host }} {% else %} ALL{% endif -%}
+=
+{%-  if user.sudoers is defined %}
+{%   for sudoer in user.sudoers %}
+{%     if sudoer.runas is defined %}({{ sudoer.runas|join(', ') }}){% else %}(ALL){% endif %}
+{%     if sudoer.nopasswd %}NOPASSWD: {% else %} PASSWD: {% endif %}
+{{ sudoer.commands|join(', ') }}{% if not loop.last %}, {% endif %}
+{%   endfor %}
+{%   else %}(ALL:ALL) ALL{% endif %}
+
+{% endfor %}

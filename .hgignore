@@ -3,6 +3,4 @@
 syntax: glob
       
 *~
-
-
-
+templates/*_tmp.j2

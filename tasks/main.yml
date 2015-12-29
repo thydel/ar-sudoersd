@@ -1,15 +1,74 @@
 ---
 
 - name: install sudo
+  when: not noapt is defined
 
   apt: { name: sudo }
 
+
+- name: choose template model
+  set_fact:
+    model: |
+      {{ model | default('simple') }}
+
+- name: set template paths
+  set_fact:
+    orig:  '{{ role_path }}/templates/{{ model }}.j2'
+    fixed: '{{ role_path }}/templates/{{ model }}_tmp.j2'
+
+
+- name: look for fixed template
+  always_run: True
+  delegate_to: localhost
+  register: tmp
+
+  stat: { path: '{{ fixed }}' }
+
+
+- name: compare template and fixed template dates
+
+  always_run: True
+  changed_when: False
+  failed_when: False
+  delegate_to: localhost
+  when: tmp.stat.exists
+  register: new
+
+  command: test {{ fixed }} -nt {{ orig }}
+
+
+- name: copy template to fix emacs mode
+  always_run: True
+  delegate_to: localhost
+  when: not tmp.stat.exists or new|failed
+  register: tmp
+
+  copy:
+    src: '{{ orig }}'
+    dest: '{{ fixed }}'
+
+
+- name: fix emacs mode
+  always_run: True
+  delegate_to: localhost
+  when: tmp.changed
+
+  lineinfile:
+    dest: '{{ fixed }}'
+    regexp: '^#.*Mode: jinja2;.*$'
+    line: '# -*- Mode: etc-sudoers-generic; -*-'
+    mode: 0444
+    backrefs: True
+    state: present
+    
+
 - name: use template
+  when: not hide is defined
 
   template:
-    src: sudoers.d.j2
-    dest: "/etc/sudoers.d/{{ file }}"
+    src: '{{ model }}_tmp.j2'
+    dest: /etc/sudoers.d/{{ file }}
     mode: 0440
     owner: root
     group: root
-    validate: "/usr/sbin/visudo -cf %s"
+    validate: /usr/sbin/visudo -cf %s

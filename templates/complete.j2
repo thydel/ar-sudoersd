@@ -1,0 +1,37 @@
+# -*- Mode: jinja2; -*-
+# {{ ansible_managed }}
+
+# Aliases
+{% set name = {} %}
+{% set dummy_ = name.update({'users':'User_Alias'}) %}
+{% set dummy_ = name.update({'runas':'Runas_Alias'}) %}
+{% set dummy_ = name.update({'hosts':'Host_Alias'}) %}
+{% set dummy_ = name.update({'cmnds':'Cmnd_Alias'}) %}
+{% for alias in aliases.keys()|sort %}
+{%   for item in aliases[alias].keys()|sort %}
+{{ name[alias] }} {{ item }} = {{ aliases[alias][item]|join(', ') }}
+{%   endfor %}
+{% endfor %}
+# Default
+{% set name = {} %}
+{% set dummy_ = name.update({'users':':'}) %}
+{% set dummy_ = name.update({'runas':'>'}) %}
+{% set dummy_ = name.update({'hosts':'@'}) %}
+{% set dummy_ = name.update({'cmnds':'!'}) %}
+{% for default in Defaults.keys()|sort %}
+{%   if default == 'all' %}
+{%     for param in Defaults[default] %}
+Defaults {{ param }}
+{%     endfor %}
+{%   elif Defaults[default] is mapping %}
+{%     for item in Defaults[default].keys()|sort %}
+{%       for param in Defaults[default][item] %}
+Defaults{{ name[default] }}{{ item }} {{ param }}
+{%       endfor %}
+{%     endfor %}
+{%   endif %}
+{% endfor %}
+# Specs
+{% for spec in specs %}
+{{ spec.users|join(', ') }} {{ spec.hosts|join(', ') }} = ({{ spec.runas|join(', ') }}) {{ spec.tags|join('') }} {{ spec.cmnds|join(', ') }}
+{% endfor %}
