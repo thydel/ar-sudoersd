@@ -16,10 +16,10 @@
     orig:  '{{ role_path }}/templates/{{ model }}.j2'
     fixed: '{{ role_path }}/templates/{{ model }}_tmp.j2'
 
-
 - name: look for fixed template
-  always_run: True
+  check_mode: yes
   delegate_to: localhost
+  become: False
   register: tmp
 
   stat: { path: '{{ fixed }}' }
@@ -27,10 +27,11 @@
 
 - name: compare template and fixed template dates
 
-  always_run: True
+  check_mode: no
   changed_when: False
   failed_when: False
   delegate_to: localhost
+  become: False
   when: tmp.stat.exists
   register: new
 
@@ -38,8 +39,9 @@
 
 
 - name: copy template to fix emacs mode
-  always_run: True
+  check_mode: no
   delegate_to: localhost
+  become: False
   when: not tmp.stat.exists or new|failed
   register: tmp
 
@@ -49,8 +51,9 @@
 
 
 - name: fix emacs mode
-  always_run: True
+  check_mode: no
   delegate_to: localhost
+  become: False
   when: tmp.changed
 
   lineinfile:
