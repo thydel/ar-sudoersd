@@ -42,7 +42,7 @@
   check_mode: no
   delegate_to: localhost
   become: False
-  when: not tmp.stat.exists or new|failed
+  when: not tmp.stat.exists or new is failed
   register: tmp
 
   copy:
